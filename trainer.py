@@ -22,12 +22,12 @@ else:
     print("Warning: HUGGINGFACE_TOKEN not found. Hub operations (push_to_hub) will not be available.")
 
 # Load dataset - default to IMDB for backward compatibility
-imdb = load_dataset("imdb")
+dataset = load_dataset("imdb")
 
 # Detect number of classes from dataset
 # For IMDB: 2 classes (positive/negative)
 # For other datasets, you can modify this
-num_classes = len(set(imdb["train"]["label"]))
+num_classes = len(set(dataset["train"]["label"]))
 print(f"Detected {num_classes} classes in dataset")
 
 # Load the Mamba model from a pretrained model with configurable num_classes.
@@ -42,9 +42,9 @@ tokenizer = AutoTokenizer.from_pretrained("EleutherAI/gpt-neox-20b")
 # Set the pad token id to the eos token id in the tokenizer.
 tokenizer.pad_token_id = tokenizer.eos_token_id
 
-imdbDataset = ImdbDataset(imdb, tokenizer)
-train_dataset = imdbDataset.return_train_dataset()
-test_dataset, eval_dataset = imdbDataset.return_test_dataset(eval_ratio=0.1)
+datasetWrapper = ImdbDataset(dataset, tokenizer)
+train_dataset = datasetWrapper.return_train_dataset()
+test_dataset, eval_dataset = datasetWrapper.return_test_dataset(eval_ratio=0.1)
 
 # Define training arguments in the TrainingArguments class.
 # More details about supported parameters can be found at: https://huggingface.co/docs/transformers/main_classes/trainer

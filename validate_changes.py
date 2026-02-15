@@ -15,8 +15,8 @@ def validate_python_file(filepath):
         return True, "OK"
     except SyntaxError as e:
         return False, f"Syntax error: {e}"
-    except Exception as e:
-        return False, f"Error: {e}"
+    except (IOError, OSError) as e:
+        return False, f"File error: {e}"
 
 def check_function_exists(filepath, function_name):
     """Check if a function exists in a file."""
