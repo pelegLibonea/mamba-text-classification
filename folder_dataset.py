@@ -29,6 +29,9 @@ import torch.nn as nn
 from torch.utils.data import Dataset, DataLoader
 from sklearn.model_selection import train_test_split
 
+# Placeholder text returned for empty / unreadable files.
+EMPTY_TEXT = "[EMPTY]"
+
 
 # ---------------------------------------------------------------------------
 # Folder parsing & text reading
@@ -55,12 +58,12 @@ def read_text_cached(path_str: str) -> str:
         txt = Path(path_str).read_text(encoding="utf-8", errors="ignore")
         txt = txt.replace("\x00", " ").strip()
         if not txt:
-            return "[EMPTY]"
+            return EMPTY_TEXT
         cleaned = [c if c.isprintable() or c in "\n\t\r " else " " for c in txt]
         out = "".join(cleaned).strip()
-        return out if out else "[EMPTY]"
+        return out if out else EMPTY_TEXT
     except Exception:
-        return "[EMPTY]"
+        return EMPTY_TEXT
 
 
 # ---------------------------------------------------------------------------

@@ -49,7 +49,11 @@ class MambaTextClassification(MambaLMHeadModel):
             return ClassificationOuptput(loss = loss, logits = logits)
 
     def forward_embeddings(self, input_ids, attention_mask=None):
-        """Return pooled hidden states (before classification head), for mixup."""
+        """Return pooled hidden states (before classification head), for mixup.
+
+        ``attention_mask`` is accepted for API compatibility but is not used
+        by the Mamba backbone (which does not use attention).
+        """
         hidden_states = self.backbone(input_ids)
         return hidden_states.mean(dim=1)
 
