@@ -61,7 +61,7 @@ training_args = TrainingArguments(
     save_steps=0.1,  # Number of steps between saving checkpoints
     logging_strategy="steps",  # Determine when to log information
     logging_steps=1,  # Number of steps between logging
-    push_to_hub=False,  # Set to True if you want to push to HuggingFace Hub (requires token)
+    push_to_hub=False,  # Set to True to push to HuggingFace Hub (requires HUGGINGFACE_TOKEN env variable)
     load_best_model_at_end=True,  # Load the model with the best evaluation result during training
 )
 
