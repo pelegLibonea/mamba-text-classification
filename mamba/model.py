@@ -16,9 +16,11 @@ class MambaTextClassification(MambaLMHeadModel):
         device = None,
         dtype = None,
         num_classes: int = 2,
+        dropout: float = 0.0,
     ) -> None:
         super().__init__(config, initializer_cfg, device, dtype)
         
+        self.drop = nn.Dropout(dropout) if dropout > 0 else nn.Identity()
         # Create a classification head using MambaClassificationHead with input size of d_model and configurable number of classes.
         self.classification_head = MambaClassificationHead(d_model=config.d_model, num_classes=num_classes)
         
@@ -31,8 +33,8 @@ class MambaTextClassification(MambaLMHeadModel):
         # Take the mean of hidden_states along the second dimension to create a representative [CLS] feature.
         mean_hidden_states = hidden_states.mean(dim = 1)
         
-        # Pass mean_hidden_states through the classification head to get logits.
-        logits = self.classification_head(mean_hidden_states)
+        # Pass mean_hidden_states through dropout and the classification head to get logits.
+        logits = self.classification_head(self.drop(mean_hidden_states))
         
         if labels is None:
             ClassificationOuptput = namedtuple("ClassificationOutput", ["logits"])
@@ -45,6 +47,16 @@ class MambaTextClassification(MambaLMHeadModel):
             loss = loss_fct(logits, labels)
             
             return ClassificationOuptput(loss = loss, logits = logits)
+
+    def forward_embeddings(self, input_ids, attention_mask=None):
+        """Return pooled hidden states (before classification head), for mixup."""
+        hidden_states = self.backbone(input_ids)
+        return hidden_states.mean(dim=1)
+
+    def forward_head(self, pooled):
+        """Pass pre-computed pooled embeddings through dropout + classification head."""
+        return self.classification_head(self.drop(pooled))
+
     def predict(self, text, tokenizer, id2label = None):
         input_ids = torch.tensor(tokenizer(text)['input_ids'], device = "cuda")[None]
         with torch.no_grad():
@@ -57,13 +69,13 @@ class MambaTextClassification(MambaLMHeadModel):
             return label
     
     @classmethod
-    def from_pretrained(cls, pretrained_model_name, device = None, dtype = None, num_classes: int = 2, **kwargs):
+    def from_pretrained(cls, pretrained_model_name, device = None, dtype = None, num_classes: int = 2, dropout: float = 0.0, **kwargs):
         # Load the configuration from the pre-trained model.
         config_data = load_config_hf(pretrained_model_name)
         config = MambaConfig(**config_data)
         
         # Initialize the model from the configuration and move it to the desired device and data type.
-        model = cls(config, device = device, dtype = dtype, num_classes=num_classes, **kwargs)
+        model = cls(config, device = device, dtype = dtype, num_classes=num_classes, dropout=dropout, **kwargs)
         
         # Load the state of the pre-trained model.
         model_state_dict = load_state_dict_hf(pretrained_model_name, device = device, dtype = dtype)
