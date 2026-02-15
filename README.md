@@ -1,17 +1,27 @@
-# Text Classification using Mamba with IMDB Dataset
+# Text Classification using Mamba with Multi-Class Support
 
 ## Overview
-This project aims to perform sentiment analysis on the IMDB movie review dataset using the Mamba Model. The goal is to classify movie reviews as either positive or negative based on their textual content.
+This project performs text classification using the Mamba Model. It now supports both **binary classification** (e.g., IMDB sentiment analysis) and **multi-class classification** (e.g., topic classification, medical document classification).
+
+The implementation follows best practices from the reference code for handling multi-class scenarios, including:
+- Configurable number of classes
+- Model saving/loading with class configuration
+- F1 score metrics (macro and weighted) alongside accuracy
+- Support for custom datasets
 
 ## Dataset
-The IMDB dataset consists of 50,000 movie reviews, split evenly into 25k for training and 25k for testing. Each review is labeled as either positive or negative.
+By default, the project uses the IMDB dataset for binary sentiment classification:
+- 50,000 movie reviews split into 25k training and 25k testing
+- Each review is labeled as either positive or negative
+
+However, you can easily adapt it to any multi-class text classification task.
 
 ## Installation
 To run the project locally, follow these steps:
 
 1. Clone this repository:
 ```
-git clone https://github.com/VuBacktracking/mamba-text-classification.git
+git clone https://github.com/pelegLibonea/mamba-text-classification.git
 ```
 2. Install the required dependencies:
 ```
@@ -19,11 +29,55 @@ pip install -r requirements.txt
 ```
 
 ## Usage
-1. Navigate to the project directory:
-```
+
+### Basic Training (Binary Classification - IMDB)
+```bash
 cd mamba-text-classification
 python trainer.py
 ```
+
+### Multi-Class Classification
+To use your own multi-class dataset, modify `trainer.py`:
+
+```python
+from datasets import load_dataset
+from mamba.model import MambaTextClassification
+from dataset import MultiClassDataset
+
+# Load your dataset (must have 'text' and 'label' fields)
+dataset = load_dataset("your_dataset_name")
+
+# Detect number of classes
+num_classes = len(set(dataset["train"]["label"]))
+
+# Initialize model with correct number of classes
+model = MambaTextClassification.from_pretrained(
+    "state-spaces/mamba-130m",
+    num_classes=num_classes
+)
+
+# Use MultiClassDataset wrapper
+dataset_wrapper = MultiClassDataset(dataset, tokenizer, num_classes=num_classes)
+train_dataset = dataset_wrapper.return_train_dataset()
+test_dataset, eval_dataset = dataset_wrapper.return_test_dataset(eval_ratio=0.1)
+```
+
+### Saving and Loading Models
+The model now includes save/load functionality similar to the reference code:
+
+```python
+# Save model after training
+model.save_pretrained("./my_model")
+
+# Load model later
+model = MambaTextClassification.load_pretrained_local("./my_model", device="cuda")
+```
+
+### Metrics
+The training now reports multiple metrics:
+- **Accuracy**: Overall classification accuracy
+- **F1 Macro**: Unweighted mean F1 score across all classes
+- **F1 Weighted**: Weighted mean F1 score (accounts for class imbalance)
 
 ## History of my training
 | Step | Training Loss | Validation Loss | Accuracy |
@@ -41,8 +95,19 @@ python trainer.py
 
 **Note**: You can check my model on hugging face hub in the link: https://huggingface.co/vubacktracking/mamba_text_classification
 
+## Key Features
+- ✅ **Multi-class support**: Configurable number of output classes
+- ✅ **Flexible dataset handling**: Works with any text classification dataset
+- ✅ **Advanced metrics**: F1 scores (macro/weighted) in addition to accuracy
+- ✅ **Model persistence**: Save and load trained models with configurations
+- ✅ **Backward compatible**: Still works with binary classification (IMDB)
+
 ## Dependencies
 - Python 3.x
+- PyTorch
+- Transformers
+- Mamba-SSM
+- scikit-learn (for F1 scores)
 - Other dependencies listed in requirements.txt
 
 ## License
@@ -51,3 +116,4 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ## Acknowledgments
 - The IMDB dataset: [http://ai.stanford.edu/~amaas/data/sentiment/](http://ai.stanford.edu/~amaas/data/sentiment/)
 - Mamba: [Mamba: Linear-Time Sequence Modeling with Selective State Spaces](https://arxiv.org/pdf/2312.00752)
+- Reference implementation for multi-class training patterns

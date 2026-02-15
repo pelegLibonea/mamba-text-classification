@@ -13,12 +13,23 @@ from transformers import Trainer
 from transformers import AutoTokenizer, TrainingArguments
 
 token = os.getenv("HUGGINGFACE_TOKEN")
-login(token=token, write_permission=True)
+if token:
+    login(token=token, write_permission=True)
 
+# Load dataset - default to IMDB for backward compatibility
 imdb = load_dataset("imdb")
 
-# Load the Mamba model from a pretrained model.
-model = MambaTextClassification.from_pretrained("state-spaces/mamba-130m")
+# Detect number of classes from dataset
+# For IMDB: 2 classes (positive/negative)
+# For other datasets, you can modify this
+num_classes = len(set(imdb["train"]["label"]))
+print(f"Detected {num_classes} classes in dataset")
+
+# Load the Mamba model from a pretrained model with configurable num_classes.
+model = MambaTextClassification.from_pretrained(
+    "state-spaces/mamba-130m", 
+    num_classes=num_classes
+)
 model.to("cuda")
 
 # Load the tokenizer of the Mamba model from the gpt-neox-20b model.
@@ -47,7 +58,7 @@ training_args = TrainingArguments(
     save_steps=0.1,  # Number of steps between saving checkpoints
     logging_strategy="steps",  # Determine when to log information
     logging_steps=1,  # Number of steps between logging
-    push_to_hub=True,  # Push the results to the Hub
+    push_to_hub=False,  # Changed to False by default to avoid requiring token
     load_best_model_at_end=True,  # Load the model with the best evaluation result during training
 )
 
@@ -63,3 +74,9 @@ trainer = MambaTrainer(
 
 # Start the training process by calling the train() function on the trainer class.
 trainer.train()
+
+# Save the model after training (similar to reference code's save mechanism)
+output_dir = training_args.output_dir
+model.save_pretrained(output_dir)
+print(f"\nModel saved to {output_dir}")
+print(f"Number of classes: {num_classes}")
