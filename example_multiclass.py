@@ -19,8 +19,16 @@ BASE_MODEL_NAME = "state-spaces/mamba-130m"
 print("Loading AG News dataset...")
 dataset = load_dataset("ag_news")
 
-# Detect number of classes
-num_classes = len(set(dataset["train"]["label"]))
+# Detect number of classes (efficient method)
+try:
+    # Try to get from ClassLabel feature (most efficient)
+    if hasattr(dataset["train"].features["label"], 'num_classes'):
+        num_classes = dataset["train"].features["label"].num_classes
+    else:
+        num_classes = len(set(dataset["train"]["label"]))
+except (AttributeError, KeyError):
+    num_classes = len(set(dataset["train"]["label"]))
+
 print(f"Number of classes: {num_classes}")
 print(f"Classes: World (0), Sports (1), Business (2), Sci/Tech (3)")
 

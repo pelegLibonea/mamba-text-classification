@@ -27,7 +27,18 @@ dataset = load_dataset("imdb")
 # Detect number of classes from dataset
 # For IMDB: 2 classes (positive/negative)
 # For other datasets, you can modify this
-num_classes = len(set(dataset["train"]["label"]))
+# Use dataset features if available for efficiency, otherwise fall back to set
+try:
+    # Try to get from ClassLabel feature (most efficient)
+    if hasattr(dataset["train"].features["label"], 'num_classes'):
+        num_classes = dataset["train"].features["label"].num_classes
+    else:
+        # Fall back to unique values
+        num_classes = len(set(dataset["train"]["label"]))
+except (AttributeError, KeyError):
+    # Final fallback for non-standard datasets
+    num_classes = len(set(dataset["train"]["label"]))
+
 print(f"Detected {num_classes} classes in dataset")
 
 # Load the Mamba model from a pretrained model with configurable num_classes.
