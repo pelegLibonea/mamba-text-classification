@@ -12,6 +12,9 @@ from datasets import load_dataset
 from transformers import Trainer
 from transformers import AutoTokenizer, TrainingArguments
 
+# Configuration
+BASE_MODEL_NAME = "state-spaces/mamba-130m"
+
 token = os.getenv("HUGGINGFACE_TOKEN")
 if token:
     login(token=token, write_permission=True)
@@ -27,7 +30,7 @@ print(f"Detected {num_classes} classes in dataset")
 
 # Load the Mamba model from a pretrained model with configurable num_classes.
 model = MambaTextClassification.from_pretrained(
-    "state-spaces/mamba-130m", 
+    BASE_MODEL_NAME, 
     num_classes=num_classes
 )
 model.to("cuda")
@@ -77,7 +80,6 @@ trainer.train()
 
 # Save the model after training (similar to reference code's save mechanism)
 output_dir = training_args.output_dir
-base_model_name = "state-spaces/mamba-130m"
-model.save_pretrained(output_dir, base_model_name=base_model_name)
+model.save_pretrained(output_dir, base_model_name=BASE_MODEL_NAME)
 print(f"\nModel saved to {output_dir}")
 print(f"Number of classes: {num_classes}")

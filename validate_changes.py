@@ -29,7 +29,7 @@ def check_function_exists(filepath, function_name):
                 if node.name == function_name:
                     return True
         return False
-    except:
+    except Exception:
         return False
 
 def check_class_method_exists(filepath, class_name, method_name):
@@ -45,7 +45,7 @@ def check_class_method_exists(filepath, class_name, method_name):
                         if item.name == method_name:
                             return True
         return False
-    except:
+    except Exception:
         return False
 
 def check_parameter_exists(filepath, class_name, method_name, param_name):
@@ -67,7 +67,7 @@ def check_parameter_exists(filepath, class_name, method_name, param_name):
                             if arg.arg == param_name:
                                 return True
         return False
-    except:
+    except Exception:
         return False
 
 print("=" * 60)

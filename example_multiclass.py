@@ -12,6 +12,9 @@ import os
 from datasets import load_dataset
 from transformers import AutoTokenizer, TrainingArguments
 
+# Configuration
+BASE_MODEL_NAME = "state-spaces/mamba-130m"
+
 # Load AG News dataset (4-class news topic classification)
 print("Loading AG News dataset...")
 dataset = load_dataset("ag_news")
@@ -24,7 +27,7 @@ print(f"Classes: World (0), Sports (1), Business (2), Sci/Tech (3)")
 # Load the Mamba model with correct number of classes
 print("\nInitializing Mamba model...")
 model = MambaTextClassification.from_pretrained(
-    "state-spaces/mamba-130m",
+    BASE_MODEL_NAME,
     num_classes=num_classes
 )
 model.to("cuda")
@@ -80,8 +83,7 @@ trainer.train()
 
 # Save model
 output_dir = training_args.output_dir
-base_model_name = "state-spaces/mamba-130m"
-model.save_pretrained(output_dir, base_model_name=base_model_name)
+model.save_pretrained(output_dir, base_model_name=BASE_MODEL_NAME)
 print(f"\nModel saved to {output_dir}")
 
 # Test loading
