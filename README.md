@@ -1,10 +1,37 @@
-# Text Classification using Mamba with IMDB Dataset
+# Text Classification using Mamba
 
 ## Overview
-This project aims to perform sentiment analysis on the IMDB movie review dataset using the Mamba Model. The goal is to classify movie reviews as either positive or negative based on their textual content.
+This project performs text classification using the Mamba Model. It supports both:
+- **Binary classification** (e.g., IMDB sentiment analysis — positive/negative)
+- **Multi-class classification** from a folder-based dataset structure
 
 ## Dataset
+
+### IMDB (Binary)
 The IMDB dataset consists of 50,000 movie reviews, split evenly into 25k for training and 25k for testing. Each review is labeled as either positive or negative.
+
+### Folder-Based (Multi-Class)
+For multi-class classification, organize your data as follows:
+```
+data_dir/
+    branch1/                    # e.g., "medical"
+        class_folder1/          # e.g., "01=Cardiology" or "01_Cardiology"
+            doc1.txt
+            doc2.txt
+        class_folder2/
+            ...
+    branch2/                    # e.g., "no_medical"
+        ...
+```
+Or a flat structure (no branches):
+```
+data_dir/
+    class_folder1/
+        doc1.txt
+    class_folder2/
+        ...
+```
+Folder names can use `code=title`, `code_title`, or `name.cat` formats.
 
 ## Installation
 To run the project locally, follow these steps:
@@ -19,11 +46,41 @@ pip install -r requirements.txt
 ```
 
 ## Usage
-1. Navigate to the project directory:
+
+### Binary Classification (IMDB)
 ```
 cd mamba-text-classification
 python trainer.py
 ```
+
+### Multi-Class Classification (Folder-Based)
+```
+python multi_class_trainer.py \
+    --data_dir /path/to/your/data \
+    --output_dir runs/my_experiment \
+    --epochs 50 \
+    --batch_size 16 \
+    --lr 5e-5 \
+    --min_samples 10 \
+    --max_samples 1500 \
+    --use_weighted_sampler \
+    --ignore_folders "noisy_folder1" "noisy_folder2"
+```
+
+Key arguments:
+| Argument | Default | Description |
+|---|---|---|
+| `--data_dir` | (required) | Root directory with class subfolders |
+| `--output_dir` | `runs/multiclass` | Output directory for checkpoints |
+| `--pretrained_model` | `state-spaces/mamba-130m` | Pretrained Mamba model |
+| `--epochs` | 50 | Number of training epochs |
+| `--batch_size` | 16 | Batch size per device |
+| `--lr` | 5e-5 | Learning rate |
+| `--min_samples` | 10 | Minimum samples per class (filter rare) |
+| `--max_samples` | None | Cap overrepresented classes |
+| `--val_ratio` | 0.10 | Validation split ratio |
+| `--use_weighted_sampler` | False | Use weighted sampling for imbalance |
+| `--ignore_folders` | [] | Folder patterns to skip |
 
 ## History of my training
 | Step | Training Loss | Validation Loss | Accuracy |

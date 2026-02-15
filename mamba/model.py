@@ -15,11 +15,12 @@ class MambaTextClassification(MambaLMHeadModel):
         initializer_cfg = None,
         device = None,
         dtype = None,
+        num_classes: int = 2,
     ) -> None:
         super().__init__(config, initializer_cfg, device, dtype)
         
-        # Create a classification head using MambaClassificationHead with input size of d_model and number of classes 2.
-        self.classification_head = MambaClassificationHead(d_model=config.d_model, num_classes=2)
+        # Create a classification head using MambaClassificationHead with input size of d_model and configurable number of classes.
+        self.classification_head = MambaClassificationHead(d_model=config.d_model, num_classes=num_classes)
         
         del self.lm_head
     
@@ -56,13 +57,13 @@ class MambaTextClassification(MambaLMHeadModel):
             return label
     
     @classmethod
-    def from_pretrained(cls, pretrained_model_name, device = None, dtype = None, **kwargs):
+    def from_pretrained(cls, pretrained_model_name, device = None, dtype = None, num_classes: int = 2, **kwargs):
         # Load the configuration from the pre-trained model.
         config_data = load_config_hf(pretrained_model_name)
         config = MambaConfig(**config_data)
         
         # Initialize the model from the configuration and move it to the desired device and data type.
-        model = cls(config, device = device, dtype = dtype, **kwargs)
+        model = cls(config, device = device, dtype = dtype, num_classes=num_classes, **kwargs)
         
         # Load the state of the pre-trained model.
         model_state_dict = load_state_dict_hf(pretrained_model_name, device = device, dtype = dtype)
