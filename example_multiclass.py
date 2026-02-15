@@ -80,7 +80,8 @@ trainer.train()
 
 # Save model
 output_dir = training_args.output_dir
-model.save_pretrained(output_dir)
+base_model_name = "state-spaces/mamba-130m"
+model.save_pretrained(output_dir, base_model_name=base_model_name)
 print(f"\nModel saved to {output_dir}")
 
 # Test loading

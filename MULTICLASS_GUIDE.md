@@ -37,12 +37,12 @@ Save trained models with their configuration:
 
 ```python
 # After training
-model.save_pretrained("./my_model")
+model.save_pretrained("./my_model", base_model_name="state-spaces/mamba-130m")
 ```
 
 This saves:
 - `pytorch_model.bin`: Model weights
-- `config.json`: Configuration including number of classes
+- `config.json`: Configuration including number of classes and base model name
 
 Load a saved model:
 
@@ -144,7 +144,7 @@ trainer = MambaTrainer(
 trainer.train()
 
 # 8. Save model
-model.save_pretrained("./mamba_agnews_final")
+model.save_pretrained("./mamba_agnews_final", base_model_name="state-spaces/mamba-130m")
 
 # 9. Make predictions
 id2label = {0: "World", 1: "Sports", 2: "Business", 3: "Sci/Tech"}

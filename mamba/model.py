@@ -57,10 +57,14 @@ class MambaTextClassification(MambaLMHeadModel):
         else:
             return label
     
-    def save_pretrained(self, save_directory, **kwargs):
+    def save_pretrained(self, save_directory, base_model_name="state-spaces/mamba-130m", **kwargs):
         """
         Save the model and its configuration to a directory.
         Similar to the reference code's save mechanism.
+        
+        Args:
+            save_directory: Directory to save the model
+            base_model_name: Name of the base pretrained model (for later loading)
         """
         import os
         import json
@@ -76,6 +80,7 @@ class MambaTextClassification(MambaLMHeadModel):
             "num_classes": self.num_classes,
             "d_model": self.backbone.embedding.weight.shape[1],
             "vocab_size": self.backbone.embedding.weight.shape[0],
+            "base_model_name": base_model_name,
         }
         config_path = os.path.join(save_directory, "config.json")
         with open(config_path, "w") as f:
@@ -97,11 +102,11 @@ class MambaTextClassification(MambaLMHeadModel):
             saved_config = json.load(f)
         
         num_classes = saved_config.get("num_classes", 2)
+        base_model_name = saved_config.get("base_model_name", "state-spaces/mamba-130m")
         
         # Load the base pretrained model with correct num_classes
-        # You'll need to specify the base model name
         model = cls.from_pretrained(
-            "state-spaces/mamba-130m",  # Base model
+            base_model_name,
             device=device,
             dtype=dtype,
             num_classes=num_classes

@@ -58,7 +58,7 @@ training_args = TrainingArguments(
     save_steps=0.1,  # Number of steps between saving checkpoints
     logging_strategy="steps",  # Determine when to log information
     logging_steps=1,  # Number of steps between logging
-    push_to_hub=False,  # Changed to False by default to avoid requiring token
+    push_to_hub=False,  # Set to True if you want to push to HuggingFace Hub (requires token)
     load_best_model_at_end=True,  # Load the model with the best evaluation result during training
 )
 
@@ -77,6 +77,7 @@ trainer.train()
 
 # Save the model after training (similar to reference code's save mechanism)
 output_dir = training_args.output_dir
-model.save_pretrained(output_dir)
+base_model_name = "state-spaces/mamba-130m"
+model.save_pretrained(output_dir, base_model_name=base_model_name)
 print(f"\nModel saved to {output_dir}")
 print(f"Number of classes: {num_classes}")
