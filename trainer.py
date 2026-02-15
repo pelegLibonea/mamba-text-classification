@@ -18,6 +18,8 @@ BASE_MODEL_NAME = "state-spaces/mamba-130m"
 token = os.getenv("HUGGINGFACE_TOKEN")
 if token:
     login(token=token, write_permission=True)
+else:
+    print("Warning: HUGGINGFACE_TOKEN not found. Hub operations (push_to_hub) will not be available.")
 
 # Load dataset - default to IMDB for backward compatibility
 imdb = load_dataset("imdb")

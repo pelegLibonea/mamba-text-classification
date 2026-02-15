@@ -57,7 +57,7 @@ class MambaTextClassification(MambaLMHeadModel):
         else:
             return label
     
-    def save_pretrained(self, save_directory, base_model_name="state-spaces/mamba-130m", **kwargs):
+    def save_pretrained(self, save_directory, base_model_name="state-spaces/mamba-130m"):
         """
         Save the model and its configuration to a directory.
         Similar to the reference code's save mechanism.
