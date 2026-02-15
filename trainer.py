@@ -12,13 +12,40 @@ from datasets import load_dataset
 from transformers import Trainer
 from transformers import AutoTokenizer, TrainingArguments
 
+# Configuration
+BASE_MODEL_NAME = "state-spaces/mamba-130m"
+
 token = os.getenv("HUGGINGFACE_TOKEN")
-login(token=token, write_permission=True)
+if token:
+    login(token=token, write_permission=True)
+else:
+    print("Warning: HUGGINGFACE_TOKEN not found. Hub operations (push_to_hub) will not be available.")
 
-imdb = load_dataset("imdb")
+# Load dataset - default to IMDB for backward compatibility
+loaded_dataset = load_dataset("imdb")
 
-# Load the Mamba model from a pretrained model.
-model = MambaTextClassification.from_pretrained("state-spaces/mamba-130m")
+# Detect number of classes from dataset
+# For IMDB: 2 classes (positive/negative)
+# For other datasets, you can modify this
+# Use dataset features if available for efficiency, otherwise fall back to set
+try:
+    # Try to get from ClassLabel feature (most efficient)
+    if hasattr(loaded_dataset["train"].features["label"], 'num_classes'):
+        num_classes = loaded_dataset["train"].features["label"].num_classes
+    else:
+        # Fall back to unique values
+        num_classes = len(set(loaded_dataset["train"]["label"]))
+except (AttributeError, KeyError):
+    # Final fallback for non-standard datasets
+    num_classes = len(set(loaded_dataset["train"]["label"]))
+
+print(f"Detected {num_classes} classes in dataset")
+
+# Load the Mamba model from a pretrained model with configurable num_classes.
+model = MambaTextClassification.from_pretrained(
+    BASE_MODEL_NAME, 
+    num_classes=num_classes
+)
 model.to("cuda")
 
 # Load the tokenizer of the Mamba model from the gpt-neox-20b model.
@@ -26,9 +53,9 @@ tokenizer = AutoTokenizer.from_pretrained("EleutherAI/gpt-neox-20b")
 # Set the pad token id to the eos token id in the tokenizer.
 tokenizer.pad_token_id = tokenizer.eos_token_id
 
-imdbDataset = ImdbDataset(imdb, tokenizer)
-train_dataset = imdbDataset.return_train_dataset()
-test_dataset, eval_dataset = imdbDataset.return_test_dataset(eval_ratio=0.1)
+dataset_wrapper = ImdbDataset(loaded_dataset, tokenizer)
+train_dataset = dataset_wrapper.return_train_dataset()
+test_dataset, eval_dataset = dataset_wrapper.return_test_dataset(eval_ratio=0.1)
 
 # Define training arguments in the TrainingArguments class.
 # More details about supported parameters can be found at: https://huggingface.co/docs/transformers/main_classes/trainer
@@ -47,7 +74,7 @@ training_args = TrainingArguments(
     save_steps=0.1,  # Number of steps between saving checkpoints
     logging_strategy="steps",  # Determine when to log information
     logging_steps=1,  # Number of steps between logging
-    push_to_hub=True,  # Push the results to the Hub
+    push_to_hub=False,  # Set to True to push to HuggingFace Hub (requires HUGGINGFACE_TOKEN env variable)
     load_best_model_at_end=True,  # Load the model with the best evaluation result during training
 )
 
@@ -63,3 +90,9 @@ trainer = MambaTrainer(
 
 # Start the training process by calling the train() function on the trainer class.
 trainer.train()
+
+# Save the model after training (similar to reference code's save mechanism)
+output_dir = training_args.output_dir
+model.save_pretrained(output_dir, base_model_name=BASE_MODEL_NAME)
+print(f"\nModel saved to {output_dir}")
+print(f"Number of classes: {num_classes}")

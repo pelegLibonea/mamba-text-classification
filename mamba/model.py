@@ -15,11 +15,13 @@ class MambaTextClassification(MambaLMHeadModel):
         initializer_cfg = None,
         device = None,
         dtype = None,
+        num_classes = 2,
     ) -> None:
         super().__init__(config, initializer_cfg, device, dtype)
         
-        # Create a classification head using MambaClassificationHead with input size of d_model and number of classes 2.
-        self.classification_head = MambaClassificationHead(d_model=config.d_model, num_classes=2)
+        # Create a classification head using MambaClassificationHead with input size of d_model and configurable number of classes.
+        self.num_classes = num_classes
+        self.classification_head = MambaClassificationHead(d_model=config.d_model, num_classes=num_classes)
         
         del self.lm_head
     
@@ -55,14 +57,77 @@ class MambaTextClassification(MambaLMHeadModel):
         else:
             return label
     
+    def save_pretrained(self, save_directory, base_model_name="state-spaces/mamba-130m"):
+        """
+        Save the model and its configuration to a directory.
+        Similar to the reference code's save mechanism.
+        
+        Args:
+            save_directory: Directory to save the model
+            base_model_name: Name of the base pretrained model (for later loading)
+        """
+        import os
+        import json
+        
+        os.makedirs(save_directory, exist_ok=True)
+        
+        # Save model state dict
+        model_path = os.path.join(save_directory, "pytorch_model.bin")
+        torch.save(self.state_dict(), model_path)
+        
+        # Save configuration
+        config_dict = {
+            "num_classes": self.num_classes,
+            "d_model": self.backbone.embedding.weight.shape[1],
+            "vocab_size": self.backbone.embedding.weight.shape[0],
+            "base_model_name": base_model_name,
+        }
+        config_path = os.path.join(save_directory, "config.json")
+        with open(config_path, "w") as f:
+            json.dump(config_dict, f, indent=2)
+        
+        print(f"Model saved to {save_directory}")
+    
     @classmethod
-    def from_pretrained(cls, pretrained_model_name, device = None, dtype = None, **kwargs):
+    def load_pretrained_local(cls, save_directory, device = None, dtype = None):
+        """
+        Load a model from a local directory that was saved with save_pretrained.
+        """
+        import os
+        import json
+        
+        # Load configuration
+        config_path = os.path.join(save_directory, "config.json")
+        with open(config_path, "r") as f:
+            saved_config = json.load(f)
+        
+        num_classes = saved_config.get("num_classes", 2)
+        base_model_name = saved_config.get("base_model_name", "state-spaces/mamba-130m")
+        
+        # Load the base pretrained model with correct num_classes
+        model = cls.from_pretrained(
+            base_model_name,
+            device=device,
+            dtype=dtype,
+            num_classes=num_classes
+        )
+        
+        # Load the saved state dict
+        model_path = os.path.join(save_directory, "pytorch_model.bin")
+        state_dict = torch.load(model_path, map_location=device)
+        model.load_state_dict(state_dict)
+        
+        print(f"Model loaded from {save_directory}")
+        return model
+    
+    @classmethod
+    def from_pretrained(cls, pretrained_model_name, device = None, dtype = None, num_classes = 2, **kwargs):
         # Load the configuration from the pre-trained model.
         config_data = load_config_hf(pretrained_model_name)
         config = MambaConfig(**config_data)
         
         # Initialize the model from the configuration and move it to the desired device and data type.
-        model = cls(config, device = device, dtype = dtype, **kwargs)
+        model = cls(config, device = device, dtype = dtype, num_classes = num_classes, **kwargs)
         
         # Load the state of the pre-trained model.
         model_state_dict = load_state_dict_hf(pretrained_model_name, device = device, dtype = dtype)
