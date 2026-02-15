@@ -125,7 +125,16 @@ class TwoStageConfig:
     STAGE1_CKPT: Optional[Path] = None
 
     # Folders to ignore in medical branch (noisy/catch-all categories)
-    MEDICAL_IGNORE_FOLDERS: Tuple[str, ...] = ()
+    MEDICAL_IGNORE_FOLDERS: Tuple[str, ...] = (
+        "מסמכים רפואיים",
+        "רפואי שונות",
+        "בדיקות במרפאה",
+        "ביקורים בקופות חולים",
+        "הפניות",
+        "דימות",
+        "אשפוזים",
+        "other medical",
+    )
 
     # Pooling strategy
     POOLING: str = "mean"
