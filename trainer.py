@@ -22,7 +22,7 @@ else:
     print("Warning: HUGGINGFACE_TOKEN not found. Hub operations (push_to_hub) will not be available.")
 
 # Load dataset - default to IMDB for backward compatibility
-dataset = load_dataset("imdb")
+loaded_dataset = load_dataset("imdb")
 
 # Detect number of classes from dataset
 # For IMDB: 2 classes (positive/negative)
@@ -30,14 +30,14 @@ dataset = load_dataset("imdb")
 # Use dataset features if available for efficiency, otherwise fall back to set
 try:
     # Try to get from ClassLabel feature (most efficient)
-    if hasattr(dataset["train"].features["label"], 'num_classes'):
-        num_classes = dataset["train"].features["label"].num_classes
+    if hasattr(loaded_dataset["train"].features["label"], 'num_classes'):
+        num_classes = loaded_dataset["train"].features["label"].num_classes
     else:
         # Fall back to unique values
-        num_classes = len(set(dataset["train"]["label"]))
+        num_classes = len(set(loaded_dataset["train"]["label"]))
 except (AttributeError, KeyError):
     # Final fallback for non-standard datasets
-    num_classes = len(set(dataset["train"]["label"]))
+    num_classes = len(set(loaded_dataset["train"]["label"]))
 
 print(f"Detected {num_classes} classes in dataset")
 
@@ -53,9 +53,9 @@ tokenizer = AutoTokenizer.from_pretrained("EleutherAI/gpt-neox-20b")
 # Set the pad token id to the eos token id in the tokenizer.
 tokenizer.pad_token_id = tokenizer.eos_token_id
 
-datasetWrapper = ImdbDataset(dataset, tokenizer)
-train_dataset = datasetWrapper.return_train_dataset()
-test_dataset, eval_dataset = datasetWrapper.return_test_dataset(eval_ratio=0.1)
+dataset_wrapper = ImdbDataset(loaded_dataset, tokenizer)
+train_dataset = dataset_wrapper.return_train_dataset()
+test_dataset, eval_dataset = dataset_wrapper.return_test_dataset(eval_ratio=0.1)
 
 # Define training arguments in the TrainingArguments class.
 # More details about supported parameters can be found at: https://huggingface.co/docs/transformers/main_classes/trainer

@@ -17,17 +17,17 @@ BASE_MODEL_NAME = "state-spaces/mamba-130m"
 
 # Load AG News dataset (4-class news topic classification)
 print("Loading AG News dataset...")
-dataset = load_dataset("ag_news")
+loaded_dataset = load_dataset("ag_news")
 
 # Detect number of classes (efficient method)
 try:
     # Try to get from ClassLabel feature (most efficient)
-    if hasattr(dataset["train"].features["label"], 'num_classes'):
-        num_classes = dataset["train"].features["label"].num_classes
+    if hasattr(loaded_dataset["train"].features["label"], 'num_classes'):
+        num_classes = loaded_dataset["train"].features["label"].num_classes
     else:
-        num_classes = len(set(dataset["train"]["label"]))
+        num_classes = len(set(loaded_dataset["train"]["label"]))
 except (AttributeError, KeyError):
-    num_classes = len(set(dataset["train"]["label"]))
+    num_classes = len(set(loaded_dataset["train"]["label"]))
 
 print(f"Number of classes: {num_classes}")
 print(f"Classes: World (0), Sports (1), Business (2), Sci/Tech (3)")
@@ -46,7 +46,7 @@ tokenizer.pad_token_id = tokenizer.eos_token_id
 
 # Prepare datasets
 print("\nPreparing datasets...")
-dataset_wrapper = MultiClassDataset(dataset, tokenizer, num_classes=num_classes)
+dataset_wrapper = MultiClassDataset(loaded_dataset, tokenizer, num_classes=num_classes)
 train_dataset = dataset_wrapper.return_train_dataset()
 test_dataset, eval_dataset = dataset_wrapper.return_test_dataset(eval_ratio=0.1)
 
